@@ -1,0 +1,23 @@
+Create table tblRates
+(
+     Id int identity primary key,
+     Currency nvarchar(5),
+     Rate decimal(10,2)
+)
+Go
+
+Insert into tblRates values ('$', 20)
+Insert into tblRates values ('€', 18.33)
+Insert into tblRates values ('£', 16.07)
+-- Do not forget to include N before the Indian Rupee symbol
+-- Otherwise when you select the data you get ? instead of ? symbol
+Insert into tblRates values (N'?', 1330.39)
+Go
+delete from tblRates where Id=4
+Select NCHAR(8377)
+select * from tblRates
+
+1	$	20.00
+2	€	18.33
+3	£	16.07
+5	?	1330.39

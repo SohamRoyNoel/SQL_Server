@@ -1,0 +1,25 @@
+select * from Employee
+select * from Department
+select Employee.nm,Employee.adr,Employee.ph,Department.dnm,Department.sal,Department.cmp from Employee Employee inner join Department Department on Employee.empid=Department.empid
+
+select * from Employee
+select * from Department
+select Employee.nm,Employee.adr,Employee.ph,Department.dnm,Department.sal,Department.cmp from Employee Employee left join Department Department on Employee.empid=Department.empid
+
+
+select * from Employee
+select * from Department
+select Employee.nm,Employee.adr,Employee.ph,Department.dnm,Department.sal,Department.cmp from Employee Employee right join Department Department on Employee.empid=Department.empid
+
+select * from Employee
+select * from Department
+select Employee.nm,Employee.adr,Employee.ph,Department.dnm,Department.sal,Department.cmp from Employee Employee full join Department Department on Employee.empid=Department.empid
+
+
+select * from Employee
+select * from Department
+select Employee.nm,Employee.adr,Employee.ph,Department.dnm,Department.sal,Department.cmp from Employee Employee,Department Department where Employee.empid=Department.empid 
+
+select * from Employee
+select * from Department
+select * from Employee,Department

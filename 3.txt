@@ -1,0 +1,1519 @@
+select LEFT('soham', 3)  -----> picks 'soh'
+
+select RIGHT('soham', 3) ------> picks 'ham'
+
+select CHARINDEX('@', 'sohamroy@gmail.com', 1) ----> returns position of @
+
+select SUBSTRING('hello world', 3, 5)  -------------->returns 'llo w', starts at 3 and runs upto 5th char since 3rd char
+
+select SUBSTRING('sohamroy@gmail.com', charindex('@', 'sohamroy@gmail.com')+1, len('sohamroy@gmail.com'))
+------------------>>>> returns 'gmail.com'
+
+select * from test_string
+
+select fname, Lname 
+from test_string
+where SUBSTRING(email, CHARINDEX('@', email)+1, len(email))='rrr.com'
+
+
+select fname, Lname
+from test_string
+where left((SUBSTRING(email, CHARINDEX('@', email)+1, len(email))), 3)='rrr'
+
+
+select fname, Lname, left((SUBSTRING(email, CHARINDEX('@', email)+1, len(email))), 3) as rab
+from test_string
+where left((SUBSTRING(email, CHARINDEX('@', email)+1, len(email))), 3)='rrr'
+
+
+select * from test_string
+
+
+select SUBSTRING(email, CHARINDEX('@', email)+1, LEN(email)), COUNT(distinct(email))
+from test_string
+group by SUBSTRING(email, CHARINDEX('@', email)+1, LEN(email))
+
+------in this case youll find the domain name of email and their corresponding distinct no,
+
+--replicate() function returns the given string, for the specified number of times
+
+select REPLICATE('nivt', 5) -----> 'nivt mam has a huge ass' repets 5 times
+
+
+select * from test_string
+
+select fname, Lname, LEFT(email, 1)+REPLICATE('*', 5)+SUBSTRING(email, charindex('@', email), len(email))
+from test_string
+
+--space function
+
+select RTRIM(fname) + space(1) + LTRIM(Lname) as bitch
+from test_string
+ 
+ select fname + Lname as bitch
+ from test_string
+
+ --patindex function
+
+ --patindex function returns an integer as like charindex but the difference is that patindex allows wildcard entries
+
+
+
+ --replace function
+
+ select id, fname, Lname, REPLACE(email, '.com', '.net') as bitch
+ from test_string
+
+ --stuff function
+
+--puts same no of * before @ like suk@ggg,com will be changed into s**@ggg.com and pussy@rrr.com ->p****@rrr.com
+
+select * from test_string
+select fname, Lname,email,  LEFT(email, 1)+REPLICATE('*', charindex('@', email, 2)-2)+RIGHT(email, LEN(email)-charindex('@', email)+1) as email
+from test_string
+
+--MATHEMATICAL FUNCTIONS:
+
+select abs(-854.55) returns-> 854.55
+
+select CEILING(15.6) ------->16
+select FLOOR(15.4)   -------->15
+
+select POWER(2, 90)
+
+select RAND()
+
+declare @cnt int
+set @cnt=1
+while(@cnt<=10)
+begin
+	print floor(rand()*100)
+	set @cnt+=@cnt
+end
+
+
+--------------------------------------------------------------scaler function: RETURNS ONLY INT
+
+create function calfun(@dob date)
+returns int
+as
+begin
+	declare @age int
+	set @age=DATEDIFF(year, @dob, getdate()) -
+	case
+		when (month(@dob)> month(getdate())) or (month(@dob)=month(getdate())) and (day(@dob) >day(getdate()))
+				then 1
+				else 0
+	end
+	return @age
+end
+
+select dbo.calfun('08-21-1997')
+
+select *, dbo.calfun(date_of_birth) as age 
+from test_string
+
+select *,  dbo.calfun(date_of_birth) as age
+from test_string
+where dbo.calfun(date_of_birth) <10
+
+
+----------------------------------------------------> INLINE FUNCTION: RETURNS TABLE
+
+
+CREATE FUNCTION FUNWITHFUN(@GEN NCHAR(10))
+RETURNS TABLE
+AS
+RETURN(SELECT * , dbo.calfun(date_of_birth) as age
+		FROM test_string
+		WHERE GENDER=@GEN)
+
+SELECT *FROM FUNWITHFUN('MALE')
+
+------------------> joining with inline function>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.
+select * from test_string
+select * from dept
+
+CREATE FUNCTION FUNWITHFUN2(@GEN NCHAR(10))
+RETURNS TABLE
+AS
+RETURN(SELECT * 
+		FROM test_string
+		WHERE GENDER=@GEN)
+
+SELECT *FROM FUNWITHFUN2('MALE')
+
+select E.fname, E.Lname, D.dept
+from  FUNWITHFUN2('Male') E
+join dept D on D.DEPT=E.DEPT
+
+------------------------------------------------------------------------------->>>>>>
+--------Multi valued function
+
+create function funname()
+returns @table table(id int, fname nchar(10), Lname nchar(10))
+as
+begin
+	insert into @table
+	select id, fname, Lname from test_string
+	return
+end
+
+select * from funname()
+
+
+--joining 'funname' table with 'dept' table 
+
+select * from test_string
+select * from dept
+select * from funname()
+
+create function Funtime()
+returns @table table(id int, fname char(10), gender nchar(10), DEPT int)
+as
+begin
+		insert into @table
+		select id, fname, gender, DEPT
+		from test_string
+return
+end
+
+--------------------------------------------------------->>>> cannot do join using the functio that i created before
+select Funtime(), e.dept
+from Funtime() s
+join dept e
+on e.dept=s.DEPT
+
+--as inline function takes value from user it is effitient for upadate insert table, multi value statement doesn't allow updatiom and deletation
+
+--creating an INLINE function that doesnt take a value to update a table
+
+create function Funzone()
+returns table
+as
+return(select Id, fname, Lname from test_string)
+
+select * from Funzone()
+update Funzone() set fname='SANA' where Id=1 ---------------> it converts 'sam' to 'sana'
+
+ 
+
+ select rand(1)   --------->rand function is diterminestic when parameter is provided
+ select rand() ------------> rand is non determinestic when no value is provided.
+
+ declare @a int
+  set @a=1
+ while(@a<5)
+ begin
+	print floor(rand()*100)
+	set @a=@a+1
+	end
+
+----------------------------------------------------------------------> SCEMABOUND
+--if we drop a table the corresponding functions will become worthless. that is why schemabinding is required
+--if the SCHEMA is bound to the function, then it is impossible to delete the table.
+--schema bound case should have a two part name
+
+create FUNCTION FUNWITHFUN4(@GEN NCHAR(10))
+RETURNS TABLE
+with schemabinding
+AS
+RETURN(select fname, Lname, email
+		FROM dbo.test_string
+		WHERE GENDER=@GEN)
+
+drop table test_string -----------------> gives this error{Cannot DROP TABLE 'test_string' because it is being referenced by object 'FUNWITHFUN4'.}
+
+--------------------------------------------------> TEMPORARY TABLES:(THIS FILES are stored in 'TempDB' folder)
+--1. lOCAL TEMPORARY TABLE (available for only that session of connection, not visible from other connection)
+--2. GLOBAL TEMPORARY TABLES
+
+--index 1:
+--gives error message is not shoen when you try to create the smae the table name from another connection.
+
+create table #temporaryTable(id int, Name nchar(10))
+
+insert into #temporaryTable values(1, 'john')
+insert into #temporaryTable values(2, 'Nicci')
+insert into #temporaryTable values(3, 'Nono')
+insert into #temporaryTable values(4, 'Momo')
+
+select * from #temporaryTable
+
+--checking temporary tables::::::::>
+
+select name from tempdb..sysobjects where name like'#temporaryT%'  ----> returns this'#temporaryTable_____________________________________________________________________________________________________00000000004B' name of the temporary table
+--index 2:
+--gives error message when you try to create the sma ethe table name from another connection.
+create table ##temporaryTable(id int, Name nchar(10))
+
+insert into ##temporaryTable values(1, 'john')
+insert into ##temporaryTable values(2, 'Nicci')
+insert into ##temporaryTable values(3, 'Nono')
+insert into ##temporaryTable values(4, 'Momo')
+
+select * from ##temporaryTable
+
+
+----------------------------------------------------------------------->>>>>INDEXER
+
+select * from test_string
+
+create index indux
+on test_string (salary ASC)
+
+-------------------------------------------> CLUSTERED INDEX: determines the physical order of a data in a table. (a table max have only one cluster index)
+
+create table [football4] --put it inside [] to produce a AUTO CLUSTER INDEX
+(
+	[id] int primary key,
+	[name] nchar(10),
+	[salary] int,
+	[gender] nchar(10),
+	[city] nchar(10)
+)
+--AS WE MADE A CLUSTER INDEX THE TABLE WILL BE STORED IN AN AUTOMATICAL ARRANGE STORAGE respect with ID :
+
+
+insert into football4 values (3, 'Nick', 15000, 'M', 'Kolkata')
+insert into football4 values (2, 'Alixa', 12500, 'F', 'Delhi')
+insert into football4 values (5, 'Selena', 10000, 'F', 'Boston')
+insert into football4 values (4, 'Noel', 20000, 'M', 'New york')
+insert into football4 values (1, 'Runi', 18000, 'M', 'Pune')
+
+select * from football4
+--CLUSTER INDEX: an index can contain multiple coulmn 
+--COMPOSITE index: if a cluster index holds multiple coulmn
+--COMPOSITE NON CLUSTERED INDEX: WHEN A NON CLUSTERED INDEX HAE MULTIPLE COULMN
+
+
+create clustered index CMPUNK
+on football4(salary ASC, gender DESC)	
+
+--claster index is faster, non cluster is much slower
+--cluster doesnot make any duplicate table to hold the ROW ADDRESS but NON CLUSTERED holdes row index in another table. SO, MUCH DISK SPACE IS NEEDED.
+
+
+--------------------------------------------------------------------------UNIQUE INDEX:DELETING INDEX WILL ALSO DELETE THE 'PRIMARY KEY CONSTRAINS', WHICH IS WHY IT'LL ALLOW DUPLICATES
+
+--CREATING UNIQUE NONCLUSTERED INDEX------------------->
+--BY DEFAULT PRIMARY KEY CONSTRAINS ACTS LIKE unique clustered index, where as UNIQUE constrains creates UNIQUE NON-CLUSTERED INDEX
+
+ALTER TABLE test_string
+add constraint undertracker
+unique clustered(email)
+--put same email at test_string table, you gonna get an error
+--COVERING QUERY: 
+select * from football4
+
+alter table football4
+add constraint edge
+unique clustered(salary)
+
+--droping 'edge' to add 'CMPUNK' again as clustered  index with respect to id
+
+create clustered index CMPUNK   
+on football4(salary ASC, gender DESC)
+
+create clustered index CMPUNK2
+on football4(id ASC)
+ 
+select * from football3 where salary>12000 and salary<19000 --in this case we do have a clustered index on salary, that is why SALARY is covering other columns to find it. this is caleed COVERING QUERY
+
+------------------------------------------------------------------------->>>>VIEWS: is nothing but a saved SQL query. A view can also be considered as a virtual table
+
+select * from dept
+select * from test_string
+
+create clustered index CMPUNK3
+on test_string(id ASC)
+
+--in general if we use query we dont know whether  it stores or not, but in case of view it stores in VIEW folder
+create view ALIXABLISS
+as
+select e.Id, e.fname, e.Lname, e.email, e.salary, f. dept
+from test_string e
+full join dept f
+on f.id=e.DEPT
+
+select * from ALIXABLISS
+sp_helptext ALIXABLISS
+--hiding row--------------------------->
+
+create view hide4
+as
+select e.Id, e.fname, e.Lname, e.email, e.salary, f. dept
+from test_string e
+full join dept f
+on f.id=e.DEPT
+where f.dept='coder'
+
+select * from hide4
+sp_helptext hide3
+create view hide3
+as
+select e.Id, e.fname, e.Lname, e.email, e.salary, f. dept
+from test_string e
+full join dept f
+on f.id=e.DEPT
+where e.Fname='SANA'
+
+
+ 
+select * from dept
+select * from test_string
+
+
+create view CAT
+as
+select e.Id, e.fname, e.Lname, e.email, e.date_of_birth, e.gender, e.salary, f.dept
+from test_string e
+join dept f
+on e.DEPT=f.id
+
+select * from CAT
+
+update CAT
+set dept='ABCD' where fname='sony'
+--before using the update id = 2 or sony ------- corresponding dept was: CODER, but as we update the view where we wanted to change the 'dept=coder to dept=ABCD' it is done, BUT IT ALSO CHANGED THE VALUE OF ID=6=CON, WE DIDNT WANT TO CHANGE THAT, BUT IT IS CHANGED
+--1	SANA      	Suk       	suk@ggg.com	  1982-10-10	Male      	100000	tester    
+--2	sony      	norde     	son@bbb.com	  1982-01-02	Female    	120000	ABCD      
+--3	son       	suke      	son1@bbb.com  2005-10-10	Male      	154287	swiper    
+--4	nun       	nuke      	nuk@ggg.com	  2005-08-08	Male      	147845	tester    
+--5	ana       	bella     	ana@rrr.com	  2009-04-04	female    	896412	swiper    
+--6	con       	cat       	con@ggg.com	  2005-07-07	Male      	147851	ABCD      
+--7	pussy     	cat       	pussy@rrr.com 2003-10-02	Female    	865412	tester    
+--10 bob       	birla     	nuk1@ggg.com  1998-10-10	female    	485555	thief     
+
+--COZ A GENERAL VIEW DOESNT STORE DATA, 
+
+select * from dept
+select * from test_string
+
+--------------------------------------------------------------------------------------->INDEXED VIEW:
+
+--rules:
+--1. should have SCHEMABINDING option
+--2. if an AGGRAGATE function is used then use ISNULL(), statement coz it might be NULL, then just replace it
+--3. if you use GROUPBY must contain a COUNT_BIG() function
+--4. base tables should have SCHEMAFIED name
+
+--more RULES:::::::::::::::::::>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+--URL: msdn.microsoft.com/en-us/library/ms191432(v=sql.105).aspx
+
+
+select * from protab
+select * from protab1
+
+create view indexedview
+with schemabinding
+as
+select Name, SUM(isnull((quantitiesSold * price), 0)) as total, COUNT_BIG(*) as trasection
+from dbo.protab
+join dbo.protab1
+on dbo.protab.productID=dbo.protab1.proId
+group by Name
+
+select * from indexedview
+------now creating index as query doesnt need to go back to the main table. that is whyquery will bw more faster
+
+create unique clustered index uuindex
+on indexedview (Name)
+
+--limitations of VIEW::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::>
+--1. parameter can not be passed.
+--2. ORDER BY clause is invalid in case of view except XML and TOP.
+--3. is not applied on TEMPORSRY TABLES.
+--4. RULES & DEFAULTS can't be associated with views
+
+--------------------------------------------------------------->>>>DML TRIGGERS
+--1. DML TRIGGER (INSERT, UPDATE, DELETE)
+--2. DDL TRIGGER
+--3. LOGON TRIGGER
+--:::::::::::::::::::::::::::::::::DML TRIGGER:  1. AFTER trigger / FOR TRIGGER: fired after an dml execution
+                                              -- 2. INSTEAD OF TRIGGERS: it is fired with the execution of DML operations
+
+-->>>>>>>>>>>>>>>>>>>  AFTER TRIGGER
+
+--trigger creates INSERTED table automatically:::::::::::::::::::::::::::>
+
+create trigger facebook2
+on triggertt
+for insert
+as
+begin
+		select * from inserted
+end
+
+select * from triggertt
+
+insert into triggertt values('Avi', 10, 1)
+insert into triggertt values('Ani', 11, 2)
+insert into triggertt values('Sum', 12, 1)
+
+--(1 row(s) affected)--insert msg
+--(1 row(s) affected)--trigger fire message, inserted table, that has same structure on the table used AFTER ON CLAUSE. 
+--(1 row(s) affected)
+--(1 row(s) affected)
+--(1 row(s) affected)
+--(1 row(s) affected)
+
+select * from triggertt
+select * from triggertt_2ndtable
+
+--add id at triggertt and he defination will be set in triggertt_2ndtable
+
+create trigger potato
+on triggertt
+for insert 
+as
+begin
+		declare @id int
+		select @id=id from inserted
+
+		insert into triggertt_2ndtable
+		values(@id, 'the student with id'+CAST(@id as nvarchar(MAX))+'is aded at'+ CAST(GETDATE() as nvarchar(MAX)))
+end
+
+insert into triggertt values('abu', 15, 1)
+insert into triggertt values('SAM', 16, 1)
+
+--creating trigger with respect with ROLL in triggertt, and the detail will be set at triggertt_2ndtable
+
+create trigger rolltag
+on triggertt
+for insert
+as
+begin
+		declare @roll int
+		select @roll=roll from triggertt
+
+		insert into triggertt_2ndtable
+		values(@roll, 'the roll '+cast(@roll as nvarchar(max))+'is INSERTED at '+ CAST(GETDATE() as nvarchar(MAX)))
+end
+
+insert into triggertt values('NATA', 17, 1)
+insert into triggertt values('BLUE', 19, 1)
+
+--delete trigger
+create trigger fordelete
+on triggertt
+for DELETE
+as
+begin
+	declare @roll int
+	select @roll=roll from deleted
+
+	insert into triggertt_2ndtable
+	values(@roll, 'the roll '+ CAST(@roll as nvarchar(MAX))+ ' has been updated at'+ CAST(GETDATE()as nvarchar(MAX)))
+end
+
+delete from triggertt where roll=11
+
+--update trigger(general)
+create trigger forupdate
+on triggertt
+for update
+as
+begin
+	select * from deleted
+	select * from inserted
+end
+
+select * from triggertt
+update triggertt set name='ABU' where id=7
+
+--------------------updating all data will be stored in triggertt_2ndtable
+
+ alter trigger forupdateN
+ on triggertt
+ for update
+ as
+ begin
+		declare @id int
+		declare @oldname nchar(10), @newname nchar(10)
+		declare @oldroll int, @newroll int
+		declare @oldsec int, @newsec int
+		declare @oldid int, @newid int
+
+		declare @auditstring nvarchar(MAX)
+
+		select * into #tab from inserted   --in case of multiple query
+
+		while(exists(select id from #tab))
+		begin
+			set @auditstring=''
+
+			select top 1 @id=id, @newname=name, @newroll=roll, @newsec=sec from #tab
+
+			select @oldname=name, @oldroll=roll, @oldsec=sec from deleted where id=@id
+
+			set @auditstring='student with id'+cast(@id as nvarchar(MAX))+'changed'
+
+			if(@oldname<>@newname)
+				set @auditstring=@auditstring +' name from '+@oldname + ' to '+ @newname 
+			if(@oldroll<>@newroll)
+				set @auditstring=@auditstring +' roll from '+CAST(@oldroll as nvarchar(MAX))+' to '+CAST(@newroll as nvarchar(MAX))
+			if(@oldsec<>@newsec)
+				set @auditstring=@auditstring +' sec from ' +CAST(@oldsec as nvarchar(MAX)) + 'to '+ CAST(@newsec as nvarchar(MAX)) 
+
+			insert into triggertt_2ndtable values (@id, @auditstring)
+
+			Delete from #tab where id=@id
+		end
+ end
+
+ select * from triggertt
+ select * from triggertt_2ndtable
+ update triggertt set name='SHAMPOO', roll=25, sec=4 where id=8
+ insert into triggertt values('HONU', 15, 5)
+
+---------------------------------------------------------------------------------------->>>>>>>>>>>>>>INSTEAD OF INSERT TRIGGER
+--(USED TO UPDATE VIEWS ON MULTIPLE TABLE CORRECTLY)
+
+SELECT * FROM trigger1
+SELECT * FROM trigger2
+
+create view triggerview
+as
+select e.id, e.Name, e.gender, f.deptname
+from trigger1 e
+join trigger2 f
+on f.depId=e.dept
+ 
+select * from triggerview
+
+insert into triggerview values(6, 'ronny', M, hr)
+--gives error, coz view is a virtual table, or just a collection of query. WE NEED TRIGGER TO UPDATE THEM.......
+
+create trigger toupdateview
+on triggerview
+Instead Of Insert
+as
+begin
+	select * from inserted
+	select * from deleted
+end 
+
+insert into triggerview values(6, 'ronny', 'M', 'hr') --it doesnt give an error coz the trigger is fired 
+--this query allows to entry an entity, but IF WE WNT TO ADD THE ENTITY IN VIEW OR TRIGGER1 TABLE then we need to construct a trigger
+
+insert into triggerview values(6, 'ronny', 'M', 'AAAAAAA')-- or it might take garbage values
+
+--to add a new item in TRIGGER1 we got to fire a trigger, that will add the element AT VIEW as well as TRIGGER1 table
+
+create trigger tag2
+on triggerview
+instead of insert
+as
+begin
+		declare @dec int
+		select @dec=depid
+		from trigger2
+		join inserted
+		on inserted.deptname=trigger2.deptname
+
+		if(@dec is null)
+		begin
+			raiserror('Invalid depertment', 16, 1)
+			return
+		end
+
+		insert into trigger1(id, Name, gender, dept)
+		select id, Name, gender, @dec
+		from inserted
+
+end
+
+--:::::::::::::::::::::::::::practicing INSTEAD OF INSERT TRIGGER 
+--taking TB1 AND TB2:::::::::::::::::::::::::::::::::::::::::::::::::::::::>>>>>>
+
+select * from tb1
+select * from tb2
+
+select id, Name, Email, ISNULL(gen, 3) as gender from tb1
+
+select e.id, e.Name, e.Email, e.gen, f.gen
+from tb1 e
+join tb2 f
+on f.id=e.gen
+
+--creating a view:
+
+create view catC
+as
+select e.id, e.Name, e.Email,f.gen
+from tb1 e
+join tb2 f
+on f.id=e.gen
+
+select * from catC
+
+insert into catC values(9, 'NANNY', 'nan@g', 'female')  ------gives error
+
+create trigger toupdateview
+on catC
+Instead Of Insert
+as
+begin
+	select * from inserted
+	select * from deleted
+end 
+
+insert into catC values(9, 'NANNY', 'nan@g', 'female')  ------ doesn't give error
+
+--creating trigger to modify the view, as well as the tb1 also
+
+create trigger shot
+on catC
+instead of insert
+as
+begin
+		declare @gen2 int
+		select @gen2=tb2.id
+		from tb2
+		join inserted
+		on inserted.gen=tb2.gen
+
+		if(@gen2 is null)
+		begin
+			raiserror('you are a goat', 16, 1);
+			return
+		end
+
+		insert into tb1(id, Name, Email, gen)
+		select id, Name, Email, @gen2
+		from inserted
+end
+
+insert into catC values(9, 'NANNY', 'nan@g', 'men') 
+
+------------------------------------------------------------------------>>>INSTADE OF UPDATE TRIGGER
+
+SELECT * FROM trigger1
+SELECT * FROM trigger2
+update trigger2 set deptname='IT' where depId=1
+
+create view INSTADE_OF_UPDATE_TRIGGERVIEW
+as
+select e.id, e.Name, e.gender, f.deptname
+from trigger1 e
+join trigger2 f
+on f.depId=e.dept
+
+SELECT * FROM INSTADE_OF_UPDATE_TRIGGERVIEW
+
+UPDATE INSTADE_OF_UPDATE_TRIGGERVIEW set Name='wizA', gender='F', deptname='admin' where id=3 --doesnt work coz a view simply can not be updated, IN CSE OF MULTIPLE TABLE IS AFFECTED
+
+UPDATE INSTADE_OF_UPDATE_TRIGGERVIEW SET deptname='HR' WHERE ID=3 --WORKS SUCCESSFULLY COZ IT AFFECTS SINGLE TABLE, AND THE 'VIEW' AS WELL AS 'trigger1'
+
+create trigger updating_a_row_without_harming_others
+on INSTADE_OF_UPDATE_TRIGGERVIEW
+instead of update
+as
+begin
+			declare @takeval int
+			if(UPDATE(id))
+			begin
+					Raiserror('ID cannt be updated', 16, 1)
+					return
+			end
+
+			if(UPDATE(deptname))   --joining inserted with trigger2
+			begin
+					select @takeval=depId
+					from trigger2
+					join inserted
+					on inserted.deptname=trigger2.deptname
+		
+
+						if(@takeval is null)  --if deptname doesnot exist in trigger2
+						begin
+								Raiserror('dept name doesnt exist', 16, 1)
+								return
+						end
+
+					update trigger1 set dept=@takeval
+					from inserted
+					join trigger1
+					on trigger1.id=inserted.id
+			end
+
+			if(UPDATE(gender))
+			begin
+					update trigger1 set gender=inserted.gender
+					from inserted
+					join trigger1
+					on trigger1.id=inserted.id
+			end
+
+			if(UPDATE(Name))
+			begin
+					update trigger1 set Name=inserted.Name
+					from inserted
+					join trigger1
+					on trigger1.id=inserted.id
+			end
+end
+
+UPDATE INSTADE_OF_UPDATE_TRIGGERVIEW set Name='wizA', gender='F', deptname='admin' where id=3 
+--now it doesnt give error and updates WIZ TO wizA
+
+--===================PRATICING INSTADE OF UPDATE TRIGGER
+
+SELECT * FROM [dbo].[SECTION]
+SELECT * FROM [dbo].[studentDETAIL]
+
+select e.roll, e.Name, e.class, e.section, f.typeN
+from studentDETAIL e
+join SECTION f
+on f.SecId=e.section
+
+--creating view
+create view Studentview
+as
+select e.roll, e.Name, e.class, e.section, f.typeN
+from studentDETAIL e
+join SECTION f
+on f.SecId=e.section
+
+--executing view
+select * from Studentview
+
+--updating multiple coloum at a time
+update Studentview set Name='jonny', class=9, section='D', typeN='Worst' --shows error: View or function 'Studentview' is not updatable because the modification affects multiple base tables.
+
+update Studentview set typeN='GOOD' where roll=3 ----affects both 3 and 6 th row in 'Studentview'
+update SECTION set typeN='bad' where SecID='C'
+
+--that is why making a trigger
+
+alter trigger Studentview_trigger
+on Studentview
+instead of update
+as
+begin 
+			declare @mytype nchar(10)
+			if(UPDATE(roll))
+			begin
+					Raiserror('ROLL cannt be updated', 16, 1)
+					return
+			end
+
+			if(UPDATE(typeN))
+			begin
+					  select @mytype=SecID
+					  from SECTION
+					  join inserted
+					  on inserted.typeN=section.typeN
+
+					  if(@mytype is null)
+					  begin
+								Raiserror('cannt be updated', 16, 1)
+								return
+					  end
+
+					  update studentDETAIL set section=@mytype
+					  from inserted
+					  join studentDETAIL
+					  on studentDETAIL.roll=inserted.roll
+			end
+
+			if(UPDATE(Name))
+			begin
+					update studentDETAIL set Name=inserted.Name
+					from inserted
+					join studentDETAIL
+					on studentDETAIL.roll=inserted.roll
+			end
+
+			if(UPDATE(class))
+			begin
+					update studentDETAIL set class=inserted.class
+					from inserted
+					join studentDETAIL
+					on studentDETAIL.roll=inserted.roll
+			end
+
+end
+
+select * from Studentview
+update Studentview set typeN='MEDIUM' where roll=3
+
+ -------------------------------------------------------------------->>>>>>INSTEAD OF DELETE
+
+ --WORKING WITH THIS TABLES >>>>>>> SECTION, studentDETAIL
+                   --VIEW   >>>>>>> Studentview
+CREATE TRIGGER INSTEAD_OF_DELETE_trigger
+on Studentview
+INSTEAD OF DELETE
+as
+begin
+		delete studentDETAIL
+		from studentDETAIL
+		join deleted
+		on studentDETAIL.roll=deleted.roll
+end
+
+delete studentDETAIL where roll=2
+select * from Studentview
+
+------------------------------------------> DERIVED TABLES AND COMMON TABLE EXPRESSION(CTE)
+
+SELECT * FROM trigger1
+SELECT * FROM trigger2
+
+--1)-----------------grouping by dept name
+
+select e.dept, f.deptname, count(*)
+from trigger1 e
+join trigger2 f
+on e.dept=f.depId
+group by e.dept, f.deptname
+
+create view tabview
+as
+select e.dept, f.deptname, count(*) as shit
+from trigger1 e
+join trigger2 f
+on e.dept=f.depId
+group by e.dept, f.deptname
+
+select * from tabview
+where shit>=2
+
+-------------GENERATING THE SAME OUTPUT BY USING (#TEMPORARY TABLES)
+
+select e.dept, f.deptname, count(*) as shit
+INTO #TEMPTABLE_FOR_GENERATING_SAME_OUTPUT
+from trigger1 e
+join trigger2 f
+on e.dept=f.depId
+group by e.dept, f.deptname
+
+select * from #TEMPTABLE_FOR_GENERATING_SAME_OUTPUT   --tabview
+where shit>=2
+
+DROP TABLE #TEMPTABLE_FOR_GENERATING_SAME_OUTPUT
+
+-------------GENERATING THE SAME OUTPUT BY USING (TABLE VARIABLE)
+			--1. LIKE temporary table it is also stored at TEMPDB.
+			--2. SCOPE of this table is through BLOCK, STORED PROCEDURE, STATEMENT
+			--3. ADVANTAGE: passed as parameter between procedure
+
+declare @tablevariable table
+(
+	dept int,
+	deptname char(10),
+	shit int
+)
+
+insert @tablevariable
+select e.dept, f.deptname, count(*) as shit
+from trigger1 e
+join trigger2 f
+on e.dept=f.depId
+group by e.dept, f.deptname
+
+select deptname, shit
+from @tablevariable   --tabview
+where shit>=2
+
+-------------GENERATING THE SAME OUTPUT BY USING (Derived TABLE)
+			-->> AVAILABLE ONLY ON THE CONTEXT OF THE QUERY
+
+select deptname,  dept
+from
+		(
+				select e.dept, f.deptname, count(*) as shit
+				from trigger1 e
+				join trigger2 f
+				on e.dept=f.depId
+				group by e.dept, f.deptname
+		)
+as shit
+where shit>=2
+
+-------------GENERATING THE SAME OUTPUT BY USING (CTE)
+
+with ctetablename(dept, deptname, shit2)
+as
+(
+				select e.dept, f.deptname, count(*) as shit2
+				from trigger1 e
+				join trigger2 f
+				on e.dept=f.depId
+				group by e.dept, f.deptname
+)
+select deptname, shit2
+from ctetablename
+where shit2>=2
+
+
+------------------------------------------------------------------------------------>>>>>>>>>>CTE
+--1. CTE IS A TEMPORARY RESULT SET
+--2. follows SELECT, INSERT, UPDATE, DELETE statement, THAI IS USED JUST AFTER THE CTE, ore the cte will be gone.
+
+with ctetablename
+as
+(
+				select e.dept, f.deptname, count(*) as shit2
+				from trigger1 e
+				join trigger2 f
+				on e.dept=f.depId
+				group by e.dept, f.deptname
+)
+select deptname, shit2
+from ctetablename
+where shit2>=2
+-- GIVES PERFECT OUTPUT
+
+
+------------------------------------------------------------------------>>>>>> UPDATABLE CTE
+--1. UPDATING CTE affects BASE TABLES also
+
+SELECT * FROM [dbo].[SECTION]
+SELECT * FROM [dbo].[studentDETAIL]
+
+--creating CTE
+with cte_table
+as
+(
+		select roll, Name, class from studentDETAIL
+)
+select * from cte_table
+
+--updating CTE
+with cte_table
+as
+(
+		select roll, Name, class from studentDETAIL
+)
+update cte_table set Name='JoNN' where roll=1 
+--affects main table, it works coz it has ONE BASE TABLE
+
+--MULTIPLE TABLE BASE CTE UPDATION
+with multiple_CTE_updation
+as
+(
+		select e.roll, e.Name, e.class, f.typeN
+		from studentDETAIL e
+		join SECTION f
+		on e.section=f.SecID
+)
+select * from multiple_CTE_updation
+
+--updating CTE
+with multiple_CTE_updation
+as
+(
+		select e.roll, e.Name, e.class, f.typeN
+		from studentDETAIL e
+		join SECTION f
+		on e.section=f.SecID
+)
+update multiple_CTE_updation set Name='NiccI', typeN='bad' where roll=3
+--updation doesnt work on two different tables, IT WORKS AT ONLY ONE TABLE
+
+---------------------------------------------------------------------------------------RECURSIVE CTE
+--(A RECURSIVE CTE IS A CTE THAT CALLS ITSELF)
+
+Select * from Employee_CTE_Updatation
+
+with recursive_CTE (EmployeeId, Name, ManagerId, [level_1])
+as
+(
+		select EmployeeId, Name, ManagerId, 1
+		from Employee_CTE_Updatation
+		where ManagerId is NULL 
+
+		union all
+
+		select Employee_CTE_Updatation.EmployeeId, Employee_CTE_Updatation.Name, Employee_CTE_Updatation.ManagerId, recursive_CTE.[level_1]+1
+		from Employee_CTE_Updatation --dont use alise coz it doesnt work..... 
+		join recursive_CTE 
+		on recursive_CTE.EmployeeId=Employee_CTE_Updatation.ManagerId
+)
+select * from recursive_CTE
+
+
+-------------------------------------------------------------------database	NORMALIZATION: is the process of organizing data to minimize DATA REDUNDENCE/ DUPLICATION
+
+
+--------------------------------------------------------------------error handling in SQL SERVER
+
+select * from [dbo].[tblProductsales_for_error]
+select * from [dbo].[tblproduct_for_error]
+
+create procedure work_with_exception
+@product int,
+@quantitysold int
+as
+begin
+		declare @quantity_available int
+
+		select @quantity_available=quantity_available
+		from tblproduct_for_error
+		where product_id=@product
+
+		if(@quantity_available<@quantitysold)
+		begin
+				raiserror('not much product to sell', 16, 1)
+		end
+
+		else
+			begin
+				begin tran
+					update tblproduct_for_error set quantity_available=(quantity_available-@quantitysold)
+					where product_id=@product
+
+					declare @maxpro int
+					select @maxpro=case when
+											max(productSalesId) is null
+											then 0
+											else
+											max(productSalesId)
+										end
+										from tblProductsales_for_error
+
+					set @maxpro=@maxpro+1
+					insert into tblProductsales_for_error values(@maxpro, @product, @quantitysold)
+				commit tran
+			end
+end
+
+---------practicing error case
+
+alter procedure work_with_exception2
+@proTYPE int,
+@quantity_avail int
+as
+begin
+			declare @tot_quantity int
+
+			select @tot_quantity=@quantity_avail
+			from tblproduct_for_error
+			where product_id=@proTYPE
+
+			if(@tot_quantity<@quantity_avail)  
+			begin
+					raiserror('not much product to sell', 16, 1)
+			end
+			--if primary key does contain NULL
+			else
+				begin
+					begin tran
+								update tblproduct_for_error	set quantity_available=(quantity_available-@quantity_avail)
+								where product_id=@proTYPE
+
+								declare @xyz int
+								select @xyz=case when 
+								MAX(productSalesId) is null
+								then 0
+								else
+								MAX(productSalesId)
+								end
+								from tblProductsales_for_error
+
+						set @xyz=@xyz+1 --incresing primary key, IF YOU DONT DO THIS PRODUCT WILL BE DEDUCTED FROM ***tblproduct_for_error*** TABLE BUT IN CASE OF primary key violation THE TRANSECTION WILL NOT BE ADDED AT ***tblProductsales_for_error*** TABLE
+						insert into tblProductsales_for_error values(@xyz, @proTYPE, @quantity_avail)
+
+					commit tran
+				end
+end
+
+work_with_exception2 2, 10
+work_with_exception 2, 10
+
+------------------------------incresing primary key, IF YOU DONT DO THIS PRODUCT WILL BE DEDUCTED FROM ***tblproduct_for_error*** TABLE BUT IN CASE OF primary key violation THE TRANSECTION WILL NOT BE ADDED AT ***tblProductsales_for_error*** TABLE
+**************************************--TRY CATCH BLOCK
+
+
+ALTER procedure work_with_exception3
+@proTYPE int,
+@quantity_avail int
+as
+begin
+			declare @tot_quantity int
+
+			select @tot_quantity=@quantity_avail
+			from tblproduct_for_error
+			where product_id=@proTYPE
+
+			if(@tot_quantity<@quantity_avail)  
+			begin
+					raiserror('not much product to sell', 16, 1)
+			end
+			--if primary key does contain NULL
+			else
+				begin
+					BEGIN TRY
+					begin tran
+								update tblproduct_for_error	set quantity_available=(quantity_available-@quantity_avail)
+								where product_id=@proTYPE
+
+								declare @xyz int
+								select @xyz=case when 
+								MAX(productSalesId) is null
+								then 0
+								else
+								MAX(productSalesId)
+								end
+								from tblProductsales_for_error
+
+						--set @xyz=@xyz+1 --incresing primary key, IF YOU DONT DO THIS PRODUCT WILL BE DEDUCTED FROM ***tblproduct_for_error*** TABLE BUT IN CASE OF primary key violation THE TRANSECTION WILL NOT BE ADDED AT ***tblProductsales_for_error*** TABLE
+						insert into tblProductsales_for_error values(@xyz, @proTYPE, @quantity_avail)
+
+					commit tran
+					END TRY
+
+					BEGIN CATCH
+						ROLLBACK TRANSACTION
+						SELECT
+							ERROR_LINE() AS ERLINE,
+							ERROR_MESSAGE() AS ERMESSAGE,
+							ERROR_NUMBER() AS ERNUMBER,
+							ERROR_PROCEDURE() AS PROCEDUREn,
+							ERROR_SEVERITY() AS ERSIV,
+							ERROR_STATE() AS STATE
+					END CATCH
+				end
+end
+
+work_with_exception3 1, 10 --I'VE COMMANTED THE LINE ON THE ***work_with_exception3*** SO I GOT AN ERROR, AND THE TRANSECTION HAS NOT BEEN DEDUCTED
+
+--ERROR MESSAGE LOOKS LIKE:::
+
+--34	Violation of PRIMARY KEY constraint 'PK_tblProductsales_for_error'. Cannot insert duplicate key in object 'dbo.tblProductsales_for_error'. The duplicate key value is (5).	2627	work_with_exception3	14	1
+ 
+
+
+ select * from [dbo].[tblProductsales_for_error]
+select * from [dbo].[tblproduct_for_error]
+
+--------------------------------------------------------------TRANSACTION SQL
+--A transection is a group of commands that change the data stored in databse. A transection is treated as a single unit. A transection ensures that, either all of the commands succided,
+--or none of them. If one of the commands in transection fails, all pf the othr command fails, any data that is modified in database is rolled back. in this way transection maintains the INTEGRETY OF A DATABASE.
+
+
+SELECT * FROM [dbo].[transection_test_1]
+SELECT * FROM [dbo].[transection_test_2]
+SELECT * FROM [dbo].[TESTING_TRANSECTION_3]
+
+
+UPDATE TESTING_TRANSECTION_3 SET PRICE=400 WHERE ID=1
+--OUTPUT
+1	PEN       	400
+2	PENCIL    200
+
+BEGIN TRANSACTION
+UPDATE TESTING_TRANSECTION_3 SET PRICE=500 WHERE ID=1
+--OUTPUT
+1	PEN       	500
+2	PENCIL    200
+
+BEGIN TRANSACTION
+UPDATE TESTING_TRANSECTION_3 SET PRICE=500 WHERE ID=1
+ROLLBACK TRANSACTION
+
+--***** TRY TO GET THE TABLE FROM DIFFERENT CONNECTION THE QUERY WILL NOT WORK, the uncommited: BY DEFAULT: UNCOMMITED
+--USE THIS TO CONNECT FROM ANOTHER CONNECTION 
+--SET TRANSECTION ISOLATION LEVEL TO UNCOMMITED
+CREATE PROCEDURE TESTING_TRANSECTION
+AS
+BEGIN
+	BEGIN TRY
+			BEGIN TRANSACTION 
+				UPDATE transection_test_1 SET CITY='LONDON' WHERE AddressId=1
+
+				update transection_test_2 set CITY='LONDON' WHERE AddressId=1
+			commit TRANSACTION
+	end try
+	begin catch
+				rollback TRANSACTION
+	end catch
+end
+
+TESTING_TRANSECTION
+
+--error check
+
+alter PROCEDURE TESTING_TRANSECTION_error
+AS
+BEGIN
+	BEGIN TRY
+			BEGIN TRANSACTION 
+				UPDATE transection_test_1 SET CITY='LONDON2' WHERE AddressId=1
+
+				update transection_test_2 set CITY='LONDON LONDON' WHERE AddressId=1
+			commit TRANSACTION
+	end try
+	begin catch
+				rollback TRANSACTION
+				print 'error'
+	end catch
+end
+
+TESTING_TRANSECTION_error
+
+--output
+--(1 row(s) affected)  1	101	10	kingstreet	LONDON    	CFDR252   
+
+--(0 row(s) affected)  1	101	10	KINGSTREET	LONDON    	GRTG  
+
+
+---------------------------------------------------------------------------TRANSECTION ACID TEST
+--MUST HAVE THIS TWO FEATURES:
+--1. ATOMIC: all statements in sql server is commited successfully or they were rolled back, or the task either left at half done.
+--2. CONSISTENT: all data touched by the T-sql, is left to a logically consistent state. like if i sell something from table1 that should be deducted fom table1 and should be stored logically at table2
+--3. ISOLATED: if one TRANSECTION IS COMMITED from one connection on A PARTICULAR ROW, that row is not visible from OTHER CONNECTION. but other rows can be seen simply from other connection. ISOLATION MEANS ONE TRANSECTION DOESNT BOTHER OTHER. maintain locking.
+--4. DURABLE: once change is done, its permanent or if machine failure occurs at the midpoint of the executuin on a transection, the database ROLLSBACK to the state before change
+ 
+ --------------------------------------------------------------------------SUBQUERIES
+ --a nested subquery can have max 32 levels of its nested case
+
+SELECT * FROM [dbo].[table_for_subqueries_testing_1]
+SELECT * FROM [dbo].[table_for_subqueries_testing_3]
+
+--QUERY: COLLECT THE PRODUCTS THAT HAS NOT BEEN SOLD:
+
+select ID, name, [description]
+from table_for_subqueries_testing_1
+where ID not in (select distinct PROID from table_for_subqueries_testing_3)
+
+--achiving it using join
+
+SELECT * FROM [dbo].[table_for_subqueries_testing_1]
+SELECT * FROM [dbo].[table_for_subqueries_testing_3]
+
+select e.ID, e.name, e.[description]
+from table_for_subqueries_testing_1 e
+left join table_for_subqueries_testing_3 f
+on e.ID=f.PROID
+where f.PROID is null
+
+--write a query to retrive the name and totalquantity sold?
+
+
+SELECT * FROM [dbo].[table_for_subqueries_testing_1]
+SELECT * FROM [dbo].[table_for_subqueries_testing_3]
+
+select name, (select ISNULL(SUM(QUANTITYSOLD), 0) FROM table_for_subqueries_testing_3 where PROID=table_for_subqueries_testing_1.ID) as sold
+from [dbo].[table_for_subqueries_testing_1]
+
+--output-----**
+TV        	0
+LAPTOP    	7
+DESKTOP   	18
+
+--doing same using joinings
+
+select e.name, ISNULL(SUM(f.QUANTITYSOLD), 0) as sold
+from table_for_subqueries_testing_1 e
+join table_for_subqueries_testing_3 f
+on e.ID=f.PROID
+group by name
+--output--
+DESKTOP   	18
+LAPTOP    	7
+
+select e.name, ISNULL(SUM(f.QUANTITYSOLD), 0) as sold
+from table_for_subqueries_testing_1 e
+ left join table_for_subqueries_testing_3 f
+on e.ID=f.PROID
+group by name
+--output--
+DESKTOP   	18
+LAPTOP    	7
+TV        	0
+
+----------------------------------------------------types of subqueries
+--1. NON-co related subqueries: doesnt depend on OUTER QUERIES (EX: FIND THE NAME OFTHE PRODUCT THAT HAS NOT BEEN SOLD)
+--2. co- related subqueries: THE QUERIES THAT CAN NOT BE EXECUTED WITHOUT OUTER BLOCK
+
+
+--NON-co related subqueries:
+SELECT ID, name, [description]
+FROM table_for_subqueries_testing_1
+WHERE ID NOT IN (SELECT DISTINCT PROID FROM table_for_subqueries_testing_3)
+---OUTPUT----
+1	TV        	GOOD TV
+
+--co- related subqueries
+
+select name, (select ISNULL(SUM(QUANTITYSOLD), 0) FROM table_for_subqueries_testing_3 where PROID=table_for_subqueries_testing_1.ID) as sold
+from [dbo].[table_for_subqueries_testing_1]
+
+----------------------------------------------------------------------RANDOM DATA PROCESSING	
+--inserting random sample data
+
+select * from [dbo].[testing_random_inserting]
+drop table [dbo].[testing_random_inserting]
+
+declare @id int
+set @id=1
+
+while(@id<=1000)
+begin
+		insert into testing_random_inserting values(@id, 'product ' +cast(@id as nvarchar(50)), 'the product is - ' +cast(@id as nvarchar(50)) )
+
+		print @id
+		set @id=@id+1
+end
+
+
+select * from [dbo].[testing_random_inserting_2]
+
+--exammining RAND AND ROUND function
+declare @low int
+set @low=1
+
+declare @high int
+set @high=5
+
+select round(((@high-@low)*RAND()+1), 0)
+
+declare @take int
+while(1=1)
+begin
+		select @take=round(((@high-@low)*RAND()+1), 0)
+		print @take
+
+		if(@take<1 or @take>=5)
+		begin
+			print 'ERROR' +cast(@take as nvarchar(5))
+			break
+		end
+end
+--it proves it will never give a value that is greater then 5 and less than 1
+------thats it
+
+--generating random productID for testing_random_inserting_2
+
+declare @UproID int 
+set @UproID=1
+declare @LproID int 
+set @LproID=10
+
+declare @Uupr int 
+set @Uupr=1
+declare @Lupr int 
+set @Lupr=10000
+
+declare @Usl int 
+set @Usl=1
+declare @Lsl int 
+set @Lsl=900
+
+declare @randomproductID int
+declare @randomunitprice int
+declare @randomsold int
+
+declare @cont int
+set @cont=14999
+while(@cont<1500000)
+begin
+	--select @randomproductID=round(((@LproID-@UproID)*RAND()+1), 0)
+	--select @randomunitprice=ROUND(((@Lupr-@Uupr)*rand()+1), 0)
+	--select @randomsold=ROUND(((@Lsl-@Usl)*rand()+1), 0)
+
+
+	insert into testing_random_inserting_2 values(@cont, round(((@LproID-@UproID)*RAND()+1), 0), ROUND(((@Lupr-@Uupr)*rand()+1), 0), ROUND(((@Lsl-@Usl)*rand()+1), 0))
+
+	print @cont
+	set @cont=@cont+1
+end
+
+--------------------------------------------------------------------JOIN OR SUBQUERIS
+--CHECKING WHICH TAKES MUCH TIME IN A RANDOM QUERY TABLE TAHT WE HAVE JUST INSERTED
+
+select * from [dbo].[testing_random_inserting]
+select * from [dbo].[testing_random_inserting_2]
+
+SELECT id, name, [description]
+from testing_random_inserting
+where id in (select id from testing_random_inserting_2)
+
+--cleaning query cache
+checkpoint;
+go
+dbcc dropcleanbuffers; 
+go
+dbcc freeprocache;
+go
+
+---------------------------------------------------------------CURSOR CONTROL: LOOPS THROUGH ALL ROWS THAT TAKES CRITICAL TIME. JOINING CAN BE A BETTER OPTION FOR DOING THAT
+--A COURSOR IS A POINTER TO A ROW, cursor returns a row at a time
+ 
+--1. FORWARD-ONLY
+--2. STATIC
+--3. KEYSET
+--4. DYNAMIC
+
+select * from [dbo].[test_for_CURSOR_control]
+
+declare @take int
+set @take=1
+while(@take<50000)
+begin
+		insert into test_for_CURSOR_control(name) values ('product ' +cast(@take as nvarchar(50))+ 'name')
+
+		set @take=@take+1
+end
+
+declare @id int
+declare @nm nvarchar(50)
+
+declare cursorcontrol3 cursor for
+	select id, name from test_for_CURSOR_control where id<10000
+open cursorcontrol3
+fetch next from cursorcontrol3 into @id, @nm
+
+while(@@FETCH_STATUS=0)
+begin
+		print 'id = '+cast(@id as nvarchar(50))+ ' & name= '+@nm
+
+		fetch next from cursorcontrol3 into @id, @nm
+end
+
+close cursorcontrol3
+
+select * from [dbo].[test_for_CURSOR_control]
+
+------------------------fucking problem
+
+declare @tid int
+declare @tnm nvarchar(50)
+
+declare cursorproblem cursor for
+	select name from test_for_CURSOR_control
+
+open cursorproblem
+	fetch next from cursorproblem into @tnm
+
+while(@@FETCH_STATUS=0)
+begin
+		select @tnm=name from test_for_CURSOR_control where id=@tid
+
+		if(@tnm= 'product 100%')
+		begin 
+				update test_for_CURSOR_control set name='OUT OF STOCK' WHERE id=@tid
+		end
+		fetch next from cursorproblem into @tnm
+
+end
+
+close cursorproblem
+
+----------------using join
+
+select * from [dbo].[test_for_coursor_join]
+
+declare @take2 int
+set @take2=1
+while(@take2<50000)
+begin
+		insert into test_for_coursor_join(pro_id, pro_name) values (@take2, 'material '+CAST(@take2 as nvarchar(50))
+
+		set (@take=@take2+1)
+end

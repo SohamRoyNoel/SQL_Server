@@ -1,0 +1,121 @@
+ select * from Emp
+
+create procedure Savedata
+(
+@ide varchar(20),
+@nm varchar(20),
+@adr varchar(20),
+@ph varchar(20),
+@sal int,
+@city varchar(20),
+@gen varchar(20),
+@dept varchAR(20),
+@cmp varchar(20)
+)
+AS
+BEGIN
+insert into Emp values(@ide,@nm,@adr,@ph,@sal,@city,@gen,@dept,@cmp)
+END
+
+exec Savedata 'E107','Pritam','Dumdum',8981324434,23000,'Kolkata','M','Tester','TCS'
+
+create procedure Showdata
+As
+Begin
+select * from Emp
+End
+
+exec Showdata
+
+create procedure Searchbyid
+(
+@id varchar(20)
+)
+As
+Begin
+select * from Emp where empid=@id
+End
+exec Searchbyid 'E102'
+
+
+alter procedure  Searchbyfirstltr
+( 
+@nam varchar(20)
+)
+as
+begin
+select * from Emp where name like @nam
+end
+
+exec Searchbyfirstltr 'p%'
+
+
+create procedure Updatedatae
+(
+@ide varchar(20),
+@nm varchar(20),
+@adr varchar(20),
+@ph varchar(20),
+@sal int,
+@city varchar(20),
+@gen varchar(20),
+@dep varchar(20),
+@cmp varchar(20)
+)
+As
+Begin
+update Emp set name=@nm,adr=@adr,phno=@ph,sal=@sal,city=@city,gen=@gen,dep=@dep,cmp=@cmp where empid=@ide
+End
+
+
+exec Updatedatae @nm='Roma',@adr='Saltlake',@ph=8981324467,@sal=30500,@city='Kolkata',@gen='F',@dep='Tester',@cmp='TCS',@ide='E101'
+
+Create procedure Deldata
+(
+@ide varchar(20)
+)
+As
+Begin
+delete from Emp where empid=@ide
+End
+
+exec Deldata 'E107'
+
+
+create procedure Dick
+(
+	@ph varchar(10),
+	@std varchar(10)
+)
+as
+begin
+update stu set phone=@ph where StuID=@std
+end
+
+exec dick @ph=8585858585, @std=8981
+
+view:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+ 
+create view showview
+As
+select empid,name,adr,phno from Emp
+
+
+select * from Emp
+select * from showview1
+
+select * from showview where empid='E101'
+
+alter  view showview
+As
+select empid,name,adr,phno,city from Emp
+
+update showview set adr='Baguihati' where empid='E101'
+
+delete from showview where empid='E106'
+
+sp_rename showview,Showview1
+drop view showview1
+
+
+
